@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Calendar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar { display: none;}
+        body { font-family: 'Inter', sans-serif; }
+        .interactive-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .filter-active { background-color: #0066cc; color: white; }
+        .event-card:hover .event-overlay { opacity: 1; }
+        .event-overlay { opacity: 0; transition: opacity 0.3s ease; }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'leipzig-blue': '#003366',
+                        'leipzig-light': '#f8fafc',
+                        'leipzig-accent': '#0066cc'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+
+<header id="header" class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="flex items-center justify-between h-16">
+            <div class="flex items-center space-x-8">
+                <div class="flex items-center space-x-3 cursor-pointer interactive-hover">
+                    <div class="w-10 h-10 bg-leipzig-blue rounded-lg flex items-center justify-center">
+                        <i class="fas fa-city text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-leipzig-blue">Leipzig</h1>
+                        <p class="text-xs text-gray-500">Event Calendar</p>
+                    </div>
+                </div>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="#" class="text-leipzig-blue font-medium border-b-2 border-leipzig-blue pb-4 transition-colors">Events</a>
+                    <a href="#" class="text-gray-600 hover:text-leipzig-blue pb-4 transition-colors">Culture</a>
+                    <a href="#" class="text-gray-600 hover:text-leipzig-blue pb-4 transition-colors">Tourism</a>
+                    <a href="#" class="text-gray-600 hover:text-leipzig-blue pb-4 transition-colors">Leisure</a>
+                </nav>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <input type="search" id="searchInput" placeholder="Search events..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-leipzig-accent focus:border-transparent w-64 transition-all">
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                </div>
+                <button class="p-2 text-gray-600 hover:text-leipzig-blue transition-colors relative">
+                    <i class="fas fa-bell"></i>
+                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+                </button>
+                <button class="bg-leipzig-accent text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-plus mr-2"></i>Add Event
+                </button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div id="breadcrumb-nav" class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-6 py-3">
+        <nav class="flex" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2 text-sm">
+                <li><a href="#" class="text-gray-500 hover:text-leipzig-blue">Home</a></li>
+                <li><i class="fas fa-chevron-right text-gray-400"></i></li>
+                <li><a href="#" class="text-gray-500 hover:text-leipzig-blue">Leisure & Culture</a></li>
+                <li><i class="fas fa-chevron-right text-gray-400"></i></li>
+                <li><span class="text-leipzig-blue font-medium">Events & Calendar</span></li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<main id="main-content" class="max-w-7xl mx-auto px-6 py-8">
+    <div class="grid grid-cols-12 gap-8">
+        
+        <aside id="filters-sidebar" class="col-span-3">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-24">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-lg font-semibold text-gray-900">Filter Events</h2>
+                    <button id="clearFilters" class="text-sm text-leipzig-accent hover:underline">Clear All</button>
+                </div>
+                
+                <div id="quick-filters" class="mb-6">
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Quick Filters</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <button class="quick-filter px-3 py-1 text-xs bg-leipzig-accent text-white rounded-full hover:bg-blue-700 transition-colors" data-filter="today">Today</button>
+                        <button class="quick-filter px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors" data-filter="week">This Week</button>
+                        <button class="quick-filter px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors" data-filter="free">Free Events</button>
+                        <button class="quick-filter px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors" data-filter="family">Family Friendly</button>
+                    </div>
+                </div>
+
+                <div id="date-filter" class="mb-6">
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Date Range</h3>
+                    <div class="space-y-3">
+                        <div class="relative">
+                            <input type="date" id="dateFrom" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-leipzig-accent focus:border-transparent">
+                            <label class="absolute -top-2 left-2 bg-white px-1 text-xs text-gray-500">From</label>
+                        </div>
+                        <div class="relative">
+                            <input type="date" id="dateTo" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-leipzig-accent focus:border-transparent">
+                            <label class="absolute -top-2 left-2 bg-white px-1 text-xs text-gray-500">To</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="category-filter" class="mb-6">
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Categories</h3>
+                    <div class="space-y-2">
+                        <label class="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded">
+                            <input type="checkbox" class="category-checkbox rounded border-gray-300 text-leipzig-accent focus:ring-leipzig-accent" value="music">
+                            <span class="ml-2 text-sm text-gray-600">Music & Concerts</span>
+                            <span class="ml-auto text-xs text-gray-400">(24)</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded">
+                            <input type="checkbox" class="category-checkbox rounded border-gray-300 text-leipzig-accent focus:ring-leipzig-accent" value="art">
+                            <span class="ml-2 text-sm text-gray-600">Art & Culture</span>
+                            <span class="ml-auto text-xs text-gray-400">(18)</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded">
+                            <input type="checkbox" class="category-checkbox rounded border-gray-300 text-leipzig-accent focus:ring-leipzig-accent" value="sports">
+                            <span class="ml-2 text-sm text-gray-600">Sports</span>
+                            <span class="ml-auto text-xs text-gray-400">(12)</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded">
+                            <input type="checkbox" class="category-checkbox rounded border-gray-300 text-leipzig-accent focus:ring-leipzig-accent" value="family">
+                            <span class="ml-2 text-sm text-gray-600">Family</span>
+                            <span class="ml-auto text-xs text-gray-400">(31)</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded">
+                            <input type="checkbox" class="category-checkbox rounded border-gray-300 text-leipzig-accent focus:ring-leipzig-accent" value="food">
+                            <span class="ml-2 text-sm text-gray-600">Food & Drink</span>
+                            <span class="ml-auto text-xs text-gray-400">(9)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="location-filter" class="mb-6">
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Location</h3>
+                    <select id="locationSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-leipzig-accent focus:border-transparent">
+                        <option value="">All Locations</option>
+                        <option value="center">City Center</option>
+                        <option value="sudvorstadt">Südvorstadt</option>
+                        <option value="plagwitz">Plagwitz</option>
+                        <option value="connewitz">Connewitz</option>
+                    </select>
+                </div>
+
+                <div id="price-filter" class="mb-6">
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Price Range</h3>
+                    <div class="space-y-2">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="price" class="price-radio text-leipzig-accent focus:ring-leipzig-accent" value="free">
+                            <span class="ml-2 text-sm text-gray-600">Free</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="price" class="price-radio text-leipzig-accent focus:ring-leipzig-accent" value="low">
+                            <span class="ml-2 text-sm text-gray-600">€1 - €20</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="price" class="price-radio text-leipzig-accent focus:ring-leipzig-accent" value="medium">
+                            <span class="ml-2 text-sm text-gray-600">€21 - €50</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="price" class="price-radio text-leipzig-accent focus:ring-leipzig-accent" value="high">
+                            <span class="ml-2 text-sm text-gray-600">€50+</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button id="applyFilters" class="w-full bg-leipzig-accent text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                    <i class="fas fa-filter mr-2"></i>Apply Filters
+                </button>
+            </div>
+        </aside>
+
+        <section id="events-content" class="col-span-9">
+            <div id="content-header" class="flex items-center justify-between mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Upcoming Events in Leipzig</h1>
+                    <p class="text-gray-600 mt-1">Discover amazing events happening in your city • <span class="font-medium">142 events found</span></p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <select class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-leipzig-accent focus:border-transparent">
+                        <option>Sort by Date</option>
+                        <option>Sort by Popularity</option>
+                        <option>Sort by Distance</option>
+                        <option>Sort by Price</option>
+                    </select>
+                    <div class="flex border border-gray-300 rounded-lg">
+                        <button class="px-3 py-2 bg-leipzig-accent text-white rounded-l-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-th-large"></i>
+                        </button>
+                        <button class="px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-r-lg transition-colors">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="featured-event" class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8 overflow-hidden interactive-hover transition-all duration-300 event-card relative">
+                <div class="grid grid-cols-12">
+                    <div class="col-span-5 relative">
+                        <div class="h-64 overflow-hidden">
+                            <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/34d999cf21-c193e01709a2851f5a71.png" alt="Leipzig concert hall with orchestra performing, warm lighting, elegant interior" />
+                        </div>
+                        <div class="event-overlay absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                            <button class="bg-white text-leipzig-blue px-6 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+                                <i class="fas fa-play mr-2"></i>Watch Preview
+                            </button>
+                        </div>
+                        <span class="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+                            <i class="fas fa-star mr-1"></i>Featured
+                        </span>
+                    </div>
+                    <div class="col-span-7 p-6">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex items-center space-x-2">
+                                <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-medium">Classical</span>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">Popular</span>
+                            </div>
+                            <button class="text-gray-400 hover:text-red-500 transition-colors">
+                                <i class="far fa-heart text-lg"></i>
+                            </button>
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-2 hover:text-leipzig-accent cursor-pointer transition-colors">Gewandhaus Orchestra - Winter Concert</h2>
+                        <p class="text-gray-600 mb-4 leading-relaxed">Experience the magic of classical music with Leipzig's world-renowned orchestra performing Beethoven's Symphony No. 9 in this spectacular winter concert.</p>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="far fa-calendar mr-2 text-leipzig-accent"></i>
+                                <span>December 15, 2024</span>
+                            </div>
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="far fa-clock mr-2 text-leipzig-accent"></i>
+                                <span>7:30 PM - 10:00 PM</span>
+                            </div>
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="fas fa-map-marker-alt mr-2 text-leipzig-accent"></i>
+                                <span>Gewandhaus Leipzig</span>
+                            </div>
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="fas fa-users mr-2 text-leipzig-accent"></i>
+                                <span>1,200+ attending</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-2xl font-bold text-leipzig-accent">€45 - €120</span>
+                                <p class="text-xs text-gray-500">Limited seats available</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors">
+                                    <i class="fas fa-share-alt mr-1"></i>Share
+                                </button>
+                                <button class="bg-leipzig-accent text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                    <i class="fas fa-ticket-alt mr-2"></i>Get Tickets
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="events-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden interactive-hover transition-all duration-300 event-card relative">
+                    <div class="h-48 overflow-hidden relative">
+                        <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/35ea4e919f-f2d355501e2f64aa1b5a.png" alt="Leipzig Christmas market at night, warm lights, festive atmosphere, people walking" />
+                        <div class="event-overlay absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                            <button class="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+                                View Details
+                            </button>
+                        </div>
+                        <span class="absolute top-3 right-3 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium">Free</span>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-start justify-between mb-3">
+                            <span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium">Festival</span>
+                            <button class="text-gray-400 hover:text-red-500 transition-colors">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2 hover:text-leipzig-accent cursor-pointer transition-colors">Leipzig Christmas Market</h3>
+                        <p class="text-gray-600 text-sm mb-4 leading-relaxed">Traditional Christmas market in the heart of Leipzig with local crafts, food, and festive atmosphere perfect for families.</p>
+                        <div class="grid grid-cols-1 gap-2 mb-4">
+                            <div class="flex items-center text-xs text-gray-500">
+                                <i class="far fa-calendar mr-2 text-leipzig-accent"></i>
+                                <span>Dec 1-23 • Daily 10:00-20:00</span>
+                            </div>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <i class="fas fa-map-marker-alt mr-2 text-leipzig-accent"></i>
+                                <span>Market Square, City Center</span>
+                            </div>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <i class="fas fa-users mr-2 text-leipzig-accent"></i>
+                                <span>5,000+ interested</span>
+                            </div>
+                        </div>
+                        <button class="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                            <i class="fas fa-info-circle mr-2"></i>Learn More
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden interactive-hover transition-all duration-300 event-card relative">
+                    <div class="h-48 overflow-hidden relative">
+                        <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/d780551fed-49f27187ac16f41d08f5.png" alt="Modern art gallery interior with contemporary paintings, minimalist design, visitors viewing art" />
+                        <div class="event-overlay absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                            <button class="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+                                View Details
+                            </button>
+                        </div>
+                        <span class="absolute top-3 left-3 bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium">New</span>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-start justify-between mb-3">
+                            <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-medium">Art</span>
+                            <button class="text-gray-400 hover:text-red-500 transition-colors">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2 hover:text-leipzig-accent cursor-pointer transition-colors">Contemporary Art Exhibition</h3>
+                        <p class="text-gray-600 text-sm mb-4 leading-relaxed">Explore the latest works from emerging European artists in this comprehensive contemporary art exhibition.</p>
+                        <div class="grid grid-cols-1 gap-2 mb-4">
+                            <div class="flex items-center text-xs text-gray-500">
+                                <i class="far fa-calendar mr-2 text-leipzig-accent"></i>
+                                <span>Dec 10 - Jan 15 • Tue-Sun 10:00-18:00</span>
+                            </div>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <i class="fas fa-map-marker-alt mr-2 text-leipzig-accent"></i>
+                                <span>Museum of Fine Arts</span>
+                            </div>
+                            <div class="flex items-center text-xs text-gray-500">
+                                <i class="fas fa-users mr-2 text-leipzig-accent"></i>
+                                <span>850+ interested</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="font-semibold text-leipzig-accent text-lg">€12</span>
+                            <button class="bg-leipzig-accent text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                <i class="fas fa-ticket-alt mr-1"></i>Buy Ticket
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<section id="design-rationale" class="max-w-7xl mx-auto px-6 py-12 bg-white mt-8">
+    <div class="bg-gray-50 rounded-xl p-8 border border-gray-200">
+        <h2 class="text-3xl font-bold text-leipzig-blue mb-6 flex items-center">
+            <i class="fas fa-lightbulb mr-3 text-yellow-500"></i>
+            Design Rationale
+        </h2>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="bg-white p-6 rounded-lg border border-gray-200">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-users mr-2 text-leipzig-accent"></i>
+                    Usability Issues Addressed
+                </h3>
+                <div class="space-y-3 text-sm text-gray-700">
+                    <div class="flex items-start space-x-2">
+                        <i class="fas fa-check-circle text-green-500 mt-1 flex-shrink-0"></i>
+                        <span><strong>Information Hierarchy:</strong> Created clear visual hierarchy with featured events, categorized filters, and structured event cards</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <i class="fas fa-check-circle text-green-500 mt-1 flex-shrink-0"></i>
+                        <span><strong>Search & Filtering:</strong> Implemented prominent search functionality with comprehensive filtering options for better event discovery</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <i class="fas fa-check-circle text-green-500 mt-1 flex-shrink-0"></i>
+                        <span><strong>Navigation:</strong> Added breadcrumb navigation and clear section organization for better user orientation</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <i class="fas fa-check-circle text-green-500 mt-1 flex-shrink-0"></i>
+                        <span><strong>Readability:</strong> Used consistent typography, adequate white space, and high contrast colors for improved accessibility</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg border border-gray-200">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-layer-group mr-2 text-leipzig-accent"></i>
+                    Figma Tools Applied
+                </h3>
+                <div class="space-y-3 text-sm text-gray-700">
+                    <div class="flex items-start space-x-2">
+                        <i class="fas fa-square text-blue-500 mt-1 flex-shrink-0"></i>
+                        <span><strong>Frames & Components:</strong> Header, sidebar, main content, and event cards organized in logical frame structures</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <i class="fas fa-font text-purple-500 mt-1 flex-shrink-0"></i>
+                        <span><strong>Typography System:</strong> Consistent text styles with Inter font family for headings, body text, and micro-copy</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <i class="fas fa-palette text-orange-500 mt-1 flex-shrink-0"></i>
+                        <span><strong>Color Variables:</strong> Leipzig brand colors defined as custom variables for consistent theming</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <i class="fas fa-expand-arrows-alt text-green-500 mt-1 flex-shrink-0"></i>
+                        <span><strong>Auto Layout:</strong> Responsive grid constraints and flexible spacing for different screen sizes</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg border border-gray-200">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-ruler-combined mr-2 text-leipzig-accent"></i>
+                    Design Principles
+                </h3>
+                <div class="space-y-3 text-sm text-gray-700">
+                    <div class="flex items-start space-x-2">
+                        <i class="fas fa-align-left text-indigo-500 mt-1 flex-shrink-0"></i>
+                        <span><strong>Alignment:</strong> Consistent left-alignment for text, centered buttons, and grid-based layout for event
